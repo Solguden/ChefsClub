@@ -56,6 +56,25 @@ def update_tenant(tenant: TenantUpdate, db: Session = Depends(get_db)):
     db.refresh(existing)
     return existing
 
+@app.put("/tenants/preferences")
+def update_tenant(tenant: TenantUpdate, db: Session = Depends(get_db)):
+    existing = db.query(Tenants).filter(Tenants.id == tenant.id).first()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Id doesnt exist")
+    
+    if tenant.name is not None:
+        existing.name = tenant.name
+    if tenant.email is not None:
+        existing.email = tenant.email
+    if tenant.room_number is not None:
+        existing.room_number = tenant.room_number
+    if tenant.birthday is not None:
+        existing.birthday = tenant.birthday
+    
+    db.commit()
+    db.refresh(existing)
+    return existing
+
 # @app.put("/tenants/deactivate")
 # def update_tenant(tenant: TenantUpdate, db: Session = Depends(get_db)):
 #     existing = db.query(Tenants).filter(Tenants.room_number == tenant.room_number).first()
