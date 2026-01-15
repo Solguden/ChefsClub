@@ -19,7 +19,7 @@ class TenantUpdate(BaseModel):
 
 class TenantDeactivate(BaseModel):
     id: int
-    active: bool
+    room_number: str
     
 class TenantPreferences(BaseModel):
     id: int

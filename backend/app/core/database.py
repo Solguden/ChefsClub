@@ -22,7 +22,6 @@ engine = create_async_engine(
     pool_pre_ping=True
 )
 
-# Her skaber vi en asynkron session-maskine
 SessionLocal = async_sessionmaker(
     bind=engine, 
     class_=AsyncSession, 
@@ -32,7 +31,6 @@ SessionLocal = async_sessionmaker(
 class Base(DeclarativeBase):
     pass
 
-# Dependency til FastAPI
 async def get_db():
     async with SessionLocal() as db:
         yield db

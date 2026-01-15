@@ -1,0 +1,15 @@
+from fastapi import FastAPI
+from app.api.tenants_api import router as tenants_router
+from app.api.dinners_api import router as dinners_router
+
+app = FastAPI(title="ChefsClub API")
+@app.get("/test")
+def test_connection():
+    return {"status": "Det virker!"}
+
+app.include_router(tenants_router, prefix="/api")
+app.include_router(dinners_router, prefix="/api")
+
+@app.get("/")
+async def root():
+    return {"message": "ChefsClub API is running!"}

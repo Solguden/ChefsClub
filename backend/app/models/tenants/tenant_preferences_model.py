@@ -1,9 +1,9 @@
 from typing import List
+from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy import String, Boolean, ForeignKey, Integer
 from app.core.database import Base
-# from app.models.tenants_model import Tenants
 
 class TenantPreferences(Base):
     __tablename__ = "tenant_preferences"

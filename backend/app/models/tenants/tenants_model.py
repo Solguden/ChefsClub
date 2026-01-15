@@ -22,3 +22,8 @@ class Tenants(Base):
         back_populates="participant",
         cascade="all, delete-orphan"
     )
+    
+    guests: Mapped[List["Guests"]] = relationship(
+        back_populates="tenant",
+        cascade="all, delete-orphan"
+    )

@@ -1,8 +1,8 @@
 from datetime import date, datetime
 from enum import Enum
-from typing import Optional
+from typing import List, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Boolean, DateTime, ForeignKey, func, Enum as SQLEnum
+from sqlalchemy import String, Boolean, DateTime, ForeignKey, func, Enum as SQLEnum, CheckConstraint
 from app.core.database import Base
 
 class ParticipantRole(Enum):
@@ -15,7 +15,8 @@ class DinnerParticipants(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     
     dinner_date : Mapped[date] = mapped_column(ForeignKey("dinners.date"))
-    participant_id : Mapped[int] = mapped_column(ForeignKey("tenants.id"))
+    participant_id : Mapped[int] = mapped_column(ForeignKey("tenants.id"),nullable=True)
+    guest_id : Mapped[Optional[List[int]]] = mapped_column(ForeignKey("guests.id"),nullable=True)
     role: Mapped[ParticipantRole] = mapped_column(
         SQLEnum(ParticipantRole), 
         default=ParticipantRole.PARTICIPANT,
@@ -26,3 +27,13 @@ class DinnerParticipants(Base):
     
     dinner: Mapped["Dinners"] = relationship(back_populates="participants")
     participant: Mapped["Tenants"] = relationship(back_populates="participations")
+    guests: Mapped["Guests"] = relationship(back_populates="guests")
+    
+    __table_args__ = (
+        CheckConstraint(
+            "(tenant_id IS NOT NULL AND guest_id IS NULL) OR (tenant_id IS NULL AND guest_id IS NOT NULL)",
+            name="check_participant_type"
+        ),
+    )
+
+#TODO gennemtjek dinner_participants, tenants, guests, og allergies efter ny version af allergies.
