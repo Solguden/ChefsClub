@@ -1,6 +1,6 @@
 from datetime import date
 from app.core.database import engine, SessionLocal, Base
-from app.models import DinnerImages, DinnerParticipants, ParticipantRole, DinnerStatus,DinnerGuests, Dinners, TenantPreferences, Tenants, Allergies, TenantAllergies
+from app.models import DinnerImages, DinnerParticipants, ParticipantRole, DinnerStatus, Dinners, TenantPreferences, Tenants, Allergies, TenantAllergies, GuestAllergies, Guests
 
 import asyncio
 import sys
@@ -17,6 +17,19 @@ async def seed_data():
         await conn.run_sync(Base.metadata.create_all)
 
     async with SessionLocal() as db:
+        
+        allergies = [
+            "Gluten", "Lactose", "Nuts", "Vegetarian", "Vegan", "Pescetar", "No fish", "No pig", "No cow", "No lamb", "No alcohol" 
+        ]
+        allergiesObjects = {}
+        
+        for name in allergies:
+            a = Allergies(name=name)
+            db.add(a)
+            allergiesObjects[name] = a
+
+        await db.flush() 
+        
         user1 = Tenants(
             email="jeppe3d@live.dk",
             room_number="206-2",
@@ -31,21 +44,17 @@ async def seed_data():
             birthday=date(2002, 10, 28),
             preferences = TenantPreferences()
         )
-        db.add_all([user1, user2])
-        
-        await db.flush() 
-        
-        allergies = [
-            "Gluten", "Lactose", "Nuts", "Vegetarian", "Vegan", "Pescetar", "No fish", "No pig", "No cow", "No lamb", "No alcohol" 
-        ]
-        
-        for a in allergies:
-            db.add(Allergies(name=a))
             
-        fabian_allergy1 = TenantAllergies(tenant_id=2,allergy_id=1)    
-        fabian_allergy2 = TenantAllergies(tenant_id=2,allergy_id=2)    
-        fabian_allergy3 = TenantAllergies(tenant_id=2,allergy_id=3)    
-        db.add_all([fabian_allergy1,fabian_allergy2,fabian_allergy3])
+        guest1 = Guests(name="Mormor",tenant_id=user2.id)
+        guest1.allergies.append(allergiesObjects["Lactose"])
+        user2.guests.append(
+            guest1
+        )
+        
+        user2.allergies.append(allergiesObjects["Gluten"]
+        )
+         
+        db.add_all([user1, user2])
         
         await db.flush() 
 
@@ -63,17 +72,18 @@ async def seed_data():
             participant_id = user2.id,
             role = ParticipantRole.PARTICIPANT
         )
+        dinner_participant_3 = DinnerParticipants(
+            dinner_date = dinner.date,
+            guest_id = guest1.id,
+            role = ParticipantRole.GUEST
+        )
         
         dinner_images = DinnerImages(
             date = dinner.date,
             images = ["Image1", "Image2"]
         )
 
-        guest = DinnerGuests(
-            friend_of = user2.id 
-        )
-
-        db.add_all([dinner_participant_1, dinner_participant_2, dinner_images, guest])
+        db.add_all([dinner_participant_1, dinner_participant_2, dinner_images,dinner_participant_3])
 
         await db.commit()
         print("✅ Database er seedet asynkront!")

@@ -6,4 +6,6 @@ from .tenants.tenant_preferences_model import TenantPreferences
 from .dinners.dinners_model import Dinners, DinnerStatus
 from .dinners.dinner_participants_model import DinnerParticipants, ParticipantRole
 from .dinners.dinner_images_model import DinnerImages
-from .dinners.dinner_guests import DinnerGuests
+# from .dinners.dinner_guests import DinnerGuests
+from .guests.guest_allergies_model import GuestAllergies
+from .guests.guest_model import Guests

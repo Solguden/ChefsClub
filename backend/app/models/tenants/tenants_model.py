@@ -27,3 +27,8 @@ class Tenants(Base):
         back_populates="tenant",
         cascade="all, delete-orphan"
     )
+    
+    allergies: Mapped[List["Allergies"]] = relationship(
+        secondary="tenant_allergies",
+        back_populates="tenants"
+    )
