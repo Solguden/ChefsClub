@@ -1,0 +1,1 @@
+from .requests.dinner.dinner_requests import AddDinnerParticipantRequest

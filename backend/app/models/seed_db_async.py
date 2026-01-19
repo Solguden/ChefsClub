@@ -74,6 +74,7 @@ async def seed_data():
         )
         dinner_participant_3 = DinnerParticipants(
             dinner_date = dinner.date,
+            participant_id = user2.id,
             guest_id = guest1.id,
             role = ParticipantRole.GUEST
         )
