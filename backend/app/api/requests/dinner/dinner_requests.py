@@ -7,3 +7,7 @@ class AddDinnerParticipantRequest(BaseModel):
     date: date
     tenant_id: int
     
+class AddDinnerGuestRequest(BaseModel):
+    date: date
+    tenant_id: int
+    guest_id: int
