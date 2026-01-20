@@ -1,2 +1,3 @@
 from .requests.dinner.dinner_requests import AddDinnerParticipantRequest, AddDinnerGuestRequest
 from .requests.guests.guest_requests import CreateGuestRequest, UpdateGuestAllergiesRequest
+from .requests.tenants.tenants_requests import UpdateTenantAllergiesRequest
