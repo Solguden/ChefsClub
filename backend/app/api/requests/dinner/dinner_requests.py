@@ -11,3 +11,7 @@ class AddDinnerGuestRequest(BaseModel):
     date: date
     tenant_id: int
     guest_id: int
+    
+class CreateSpecialDinnerRequest(BaseModel):
+    date: date
+    title: str

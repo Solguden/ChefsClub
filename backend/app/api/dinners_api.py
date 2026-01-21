@@ -1,11 +1,11 @@
 from datetime import date
 from fastapi import FastAPI, Depends, HTTPException, APIRouter, status, Response
-from app.models import Dinners, DinnerParticipants, ParticipantRole, Tenants, Guests
+from app.models import Dinners, DinnerParticipants, ParticipantRole, Tenants, Guests, DinnerType
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select 
 from app.core.database import get_db
-from app.api import AddDinnerParticipantRequest, AddDinnerGuestRequest
+from app.api import AddDinnerParticipantRequest, AddDinnerGuestRequest, CreateSpecialDinnerRequest
         
 router = APIRouter()
 
@@ -29,12 +29,50 @@ async def get_dinner(date: date, db: AsyncSession = Depends(get_db)):
     
     return dinner
 
+@router.post("/dinneres/special")
+async def create_special_dinner(request: CreateSpecialDinnerRequest, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Dinners).filter(Dinners.date == request.date))
+    dinner = result.scalar_one_or_none()
+    
+    if not dinner:
+        dinner = Dinners(
+            date = request.date,
+            title = request.title,
+            type = DinnerType.SPECIAL
+        )
+        
+        db.add(dinner)
+        await db.commit()
+        
+        return Response(
+            content=None,
+            status_code=status.HTTP_201_CREATED,
+            headers=None,
+            media_type=None,
+            background=None,
+        ) 
+    
+    dinner.title = request.title
+    dinner.type = DinnerType.SPECIAL
+    
+    await db.commit()
+    
+    return Response(
+        content=None,
+        status_code=status.HTTP_200_OK,
+        headers=None,
+        media_type=None,
+        background=None,
+    )
+    
+    
+
 @router.get("/dinners/{date}/participants")
 async def get_dinner_participants(date: date, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(DinnerParticipants).filter(DinnerParticipants.dinner_date == date))
     return result.scalars().all()
 
-@router.put("dinners/{date}/participants")
+@router.put("/dinners/{date}/participants")
 async def put_dinner_participants(request: AddDinnerParticipantRequest,  db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Tenants).filter(Tenants.id == request.tenant_id))
     tenant = result.scalar_one_or_none()
@@ -76,7 +114,7 @@ async def put_dinner_participants(request: AddDinnerParticipantRequest,  db: Asy
         background=None,
     )
     
-@router.put("dinners/{date}/guests")
+@router.put("/dinners/{date}/guests")
 async def put_dinner_guests(request: AddDinnerGuestRequest,  db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Tenants).filter(Tenants.id == request.tenant_id))
     tenant = result.scalar_one_or_none()

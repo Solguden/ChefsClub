@@ -1,7 +1,9 @@
+import calendar
+from datetime import datetime
+from typing import List
 from fastapi import FastAPI, Depends, HTTPException, APIRouter, status,Response
 from app.models import Tenants, TenantPreferences, Allergies
-from app.api import UpdateTenantAllergiesRequest
-from app.schemas.tenants_schema import TenantCreate, TenantUpdate, TenantDeactivate
+from app.api import UpdateTenantAllergiesRequest, CreateTenantRequest, DeactivateTenantRequest, UpdateTenantPreferencesRequest, UpdateTenantRequest
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select 
 from sqlalchemy.orm import selectinload 
@@ -20,7 +22,7 @@ async def list_tenants(db: AsyncSession = Depends(get_db)):
     return tenants
 
 @router.post("/tenants")
-async def create_tenant(tenant: TenantCreate, db: AsyncSession = Depends(get_db)):
+async def create_tenant(tenant: CreateTenantRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Tenants).filter(Tenants.room_number == tenant.room_number, Tenants.active == True))
     existing = result.scalar_one_or_none()
     
@@ -41,7 +43,7 @@ async def create_tenant(tenant: TenantCreate, db: AsyncSession = Depends(get_db)
     return db_tenant
 
 @router.put("/tenants")
-async def update_tenant(tenant: TenantUpdate, db: AsyncSession = Depends(get_db)):
+async def update_tenant(tenant: UpdateTenantRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Tenants).filter(Tenants.id == tenant.id))
     existing = result.scalar_one_or_none()
     
@@ -62,7 +64,7 @@ async def update_tenant(tenant: TenantUpdate, db: AsyncSession = Depends(get_db)
     return existing
 
 @router.put("/tenants/deactivate")
-async def deactivate_tenant(tenant: TenantDeactivate, db: AsyncSession = Depends(get_db)):
+async def deactivate_tenant(tenant: DeactivateTenantRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Tenants).filter(Tenants.id == tenant.id, Tenants.active == True))
     existing = result.scalar_one_or_none()
     
@@ -75,8 +77,8 @@ async def deactivate_tenant(tenant: TenantDeactivate, db: AsyncSession = Depends
     await db.refresh(existing)
     return existing
 
-@router.put("tenants/allergies")
-async def put_guest_allergies(request: UpdateTenantAllergiesRequest, db: AsyncSession = Depends(get_db)):
+@router.put("/tenants/allergies")
+async def update_tenants_allergies(request: UpdateTenantAllergiesRequest, db: AsyncSession = Depends(get_db)):
     query1 = (
         select(Tenants)
         .where(Tenants.id == request.tenant_id)
@@ -109,3 +111,46 @@ async def put_guest_allergies(request: UpdateTenantAllergiesRequest, db: AsyncSe
         media_type=None,
         background=None,
     )
+    
+@router.put("/tenants/preferences")
+async def update_tenant_preferences(request: UpdateTenantPreferencesRequest, db: AsyncSession = Depends(get_db)):
+    query1 = (
+        select(Tenants)
+        .where(Tenants.id == request.tenant_id)
+        .options(selectinload(Tenants.preferences))
+    )
+    result = await db.execute(query1)
+    tenant = result.scalar_one_or_none()
+    
+    if not tenant:
+        raise HTTPException(status_code=404, detail=f"Tenant with id: {request.tenant_id} not found")
+    
+    if request.available_weekdays is not None: 
+        if not checkDateInterval(0,6,request.available_weekdays):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"available_weekdays must be between 0-6")
+        tenant.preferences.available_weekdays = request.available_weekdays
+    
+    if request.available_months is not None: 
+        if not checkDateInterval(0,11,request.available_months):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"available_months must be between 0-6")
+        tenant.preferences.available_months = request.available_months
+    
+    if request.unavailable_dates_current_month is not None: 
+        num_days = calendar.monthrange(datetime.now().year, datetime.now().month)[1] - 1
+        if not checkDateInterval(0,num_days,request.unavailable_dates_current_month):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"unavailable_dates_current_month must be between 0-6")
+        tenant.preferences.unavailable_dates_current_month = request.unavailable_dates_current_month
+        
+    await db.commit()
+    
+    return Response(
+        content=None,
+        status_code=status.HTTP_200_OK,
+        headers=None,
+        media_type=None,
+        background=None
+    )
+    
+
+def checkDateInterval(start:int,end:int, interval:List[int]):
+    return all(start<= d <= end for d in interval)

@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, APIRouter, status, Response
 from app.models import Guests, GuestAllergies, Tenants, Allergies
 from app.api import CreateGuestRequest, UpdateGuestAllergiesRequest
-from app.schemas.tenants_schema import TenantCreate, TenantUpdate, TenantDeactivate
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select 
 from sqlalchemy.orm import selectinload

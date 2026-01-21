@@ -1,0 +1,1 @@
+from .dinner.dinner_jobs import generate_monthly_dinners
